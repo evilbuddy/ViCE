@@ -23,7 +23,7 @@ be sure to use the Windows SDK 10.0 and the Build Tools v143
 4. smash "Build"
 
 ### Visual Studio CLI / MSVC
-`cl /I "C:\opencv\build\include" Program.cpp "C:\opencv\build\x64\vc16\lib\opencv_world490.lib"
+`cl /I "C:\opencv\build\include" Program.cpp "C:\opencv\build\x64\vc16\lib\opencv_world490.lib"`
 
 Replace `C:\opencv` with your OpenCV folder
 
