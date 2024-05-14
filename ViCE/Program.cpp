@@ -48,23 +48,36 @@ std::string wstringToString(std::wstring wstr) {
 }
 
 std::string ExePath() {
-    TCHAR buffer[MAX_PATH] = { 0 };
+    LPSTR buffer;
     GetModuleFileName(NULL, buffer, MAX_PATH);
-    std::wstring::size_type pos = std::wstring(buffer).find_last_of(L"\\/");
-    std::wstring wpath = std::wstring(buffer).substr(0, pos);
-    std::string path = wstringToString(wpath);
+    std::string fullpath(buffer);
+    std::string::size_type pos = fullpath.find_last_of("\\/");
+    std::string path = fullpath.substr(0, pos);
     return path;
 }
 
 int main(int argc, char* argv[])
 {
-    if (argc < 2 || argc > 3)
+    if (argc < 2 || argc > 4)
     {
-        std::cout << "Usage: ViCE <video>";
+        std::cout << "Usage: ViCE <video> (frameskip/auto)";
         return -1;
     }
 
 	std::string video = argv[1];
+    int customFrameSkip = 0;
+
+    if(argc == 3)
+    {
+        if(argv[2] == "auto")
+        {
+            customFrameSkip = -1;
+        }
+        else
+        {
+            customFrameSkip = (int)argv[2];
+        }
+    }
 
 	cv::VideoCapture capture(video);
 
@@ -75,7 +88,8 @@ int main(int argc, char* argv[])
     cv::Vec3b bgr;
     unsigned char grayScale;
     int frameNbr = 0;
-    bool doSkip = false;
+    int framesToSkip = 0;
+    int skippedFrames = 0;
     double frameCnt = capture.get(cv::CAP_PROP_FRAME_COUNT);
     double FPS = capture.get(cv::CAP_PROP_FPS);
 
@@ -86,6 +100,30 @@ int main(int argc, char* argv[])
 
 	while (capture.read(frame))
 	{
+        if(framesToSkip > 0)
+        {
+            if(skippedFrames == framesToSkip)
+            {
+                frameNbr += framesToSkip;
+                skippedFrames = 0;
+                framesToSkip = 0;
+            }
+            else
+            {
+                skippedFrames += 1;
+                continue;
+            }
+        }
+
+        if(customFrameSkip < 0 && (std::chrono::system_clock::now() - lastFrame).count() / 60000 != FPS)
+        {
+            framesToSkip = (FPS - (std::chrono::system_clock::now() - lastFrame).count() / 60000) / 14;
+        }
+        else
+        {
+            framesToSkip == customFrameSkip;
+        }
+
         frameNbr++;
         cv::resize(frame, frame, cv::Size(120, 45));
         frameASCII = "";
@@ -107,7 +145,7 @@ int main(int argc, char* argv[])
 
         system("cls");
         std::cout << frameASCII;
-        std::cout << frameNbr << "/" << frameCnt << " @ " << (std::chrono::system_clock::now() - lastFrame).count() / 60000 << "/" << FPS << std::endl;
+        std::cout << frameNbr << "/" << frameCnt << " @ " << (std::chrono::system_clock::now() - lastFrame).count() / 60000 << "/" << FPS << " (" << framesToSkip << ")" << "\n";
 
         lastFrame = std::chrono::system_clock::now();
 	}
