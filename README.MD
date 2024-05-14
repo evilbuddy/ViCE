@@ -7,7 +7,7 @@ The 2nd argument is the frameskip. If not set, it will be 0 (no frames skipped).
 
 > Notes:
 > The automatic frames skip was calibrated using a 480x360 video with 6569 frames @ 30fps
-> Calculation itself is intensive, and I recomment running the program with a set frameskip with the same value as the one given by the automatic calculation.
+> Calculation itself is intensive, and I recommend running the program with a set frameskip with the same value as the one given by the automatic calculation.
 > If it is really bad, I recommend using your own (0 will be slow)
 
 # Build
