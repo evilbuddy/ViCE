@@ -10,6 +10,11 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
+// audio (winmmm)
+#include <Mmsystem.h>
+#include <mciapi.h>
+#pragma comment(lib, "Winmm.lib")
+
 const char* getChar(unsigned char grayScale)
 {
     if (grayScale >= 240)
@@ -56,6 +61,15 @@ std::string ExePath() {
     return path;
 }
 
+bool fileExists (const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }   
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 2 || argc > 4)
@@ -66,16 +80,29 @@ int main(int argc, char* argv[])
 
 	std::string video = argv[1];
     int customFrameSkip = 0;
+    double frameSkipMultiplier = 0.1;
 
     if(argc == 3)
     {
-        if(argv[2] == "auto")
+        std::string arg = argv[2];
+
+        if(arg == "auto")
         {
             customFrameSkip = -1;
         }
+        else if(arg.substr(0, 1) == "*")
+        {
+            customFrameSkip = -1;
+            frameSkipMultiplier = std::stod(arg.substr(1, arg.length()));
+        }
+        else if(arg.substr(0, 1) == "/")
+        {
+            customFrameSkip = -1;
+            frameSkipMultiplier = 1 / std::stod(arg.substr(1, arg.length()));
+        }
         else
         {
-            customFrameSkip = (int)argv[2];
+            customFrameSkip = std::stoi(arg);
         }
     }
 
@@ -97,6 +124,14 @@ int main(int argc, char* argv[])
     {
         video = ExePath() + video;
     }
+    
+    std::string audio = video.substr(0, video.find_last_of(".")) + ".mp3";
+
+    if(fileExists(audio))
+    {
+        mciSendString(("open \"" + audio + "\" type mpegvideo alias mp3").c_str(), NULL, 0, NULL);
+        mciSendString("play mp3", NULL, 0, NULL);
+    }
 
 	while (capture.read(frame))
 	{
@@ -117,11 +152,11 @@ int main(int argc, char* argv[])
 
         if(customFrameSkip < 0 && (std::chrono::system_clock::now() - lastFrame).count() / 60000 != FPS)
         {
-            framesToSkip = (FPS - (std::chrono::system_clock::now() - lastFrame).count() / 60000) / 14;
+            framesToSkip = (FPS - (std::chrono::system_clock::now() - lastFrame).count() / 60000) * frameSkipMultiplier;
         }
         else
         {
-            framesToSkip == customFrameSkip;
+            framesToSkip = customFrameSkip;
         }
 
         frameNbr++;
