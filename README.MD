@@ -1,3 +1,6 @@
+# ViCE HAS BEEN REPLACED WITH ViCE2 !!!
+https://github.com/evilbuddy/ViCE2
+
 # Usage
 `ViCE.exe <video> (frameskip)`
 
